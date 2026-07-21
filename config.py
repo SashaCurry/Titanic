@@ -16,6 +16,7 @@ config = {
     'dataloader_params': {
     },
     'split': {
+        'n_splits': 5
     },
     'augmentation': {
     },

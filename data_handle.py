@@ -1,8 +1,9 @@
 import pandas as pd
 
-def preprocessing(train_data):
 
-    # Заполняем null-значения
+def preprocessing(train_data, handle_categorical=True):
+
+    # ↓↓↓ Заполняем null-значения ↓↓↓
 
     train_data.loc[train_data['Embarked'].isnull(), 'Embarked'] = 'S'
 
@@ -15,7 +16,7 @@ def preprocessing(train_data):
     for honorific in mean_ages.index:
         train_data.loc[(train_data['Age'].isnull()) & (train_data['Honorifics'] == honorific), 'Age'] = mean_ages[honorific]
 
-    # Преобразуем непрерывные величины в дискретные
+    # ↓↓↓ Преобразуем непрерывные величины в дискретные ↓↓↓
 
     train_data['Age_Group'] = pd.cut(x=train_data['Age'],
                                      bins=[0, 10, 20, 30, 40, 50, 60, 70, 80],
@@ -26,20 +27,28 @@ def preprocessing(train_data):
                                        q=5,
                                        labels=[0, 1, 2, 3, 4])
 
-    # Создадим новые фичи
+    if handle_categorical:
+        train_data['Age_Group'] = train_data['Age_Group'].astype(int)
+        train_data['Fare_Range'] = train_data['Fare_Range'].astype(int)
+
+    # ↓↓↓ Создадим новые фичи ↓↓↓
 
     train_data['Family_Size'] = train_data['SibSp'] + train_data['Parch']
 
-    train_data['Alone'] = 0
-    train_data.loc[train_data['Family_Size'] == 0, 'Alone'] = 1
+    train_data['Alone'] = False
+    train_data.loc[train_data['Family_Size'] == 0, 'Alone'] = True
 
-    # Преобразуем стороковые величины в числовые
+    if handle_categorical:
+        train_data['Alone'].astype(int)
 
-    train_data['Sex'] = train_data['Sex'].replace(['male', 'female'], [0, 1])
-    train_data['Embarked'] = train_data['Embarked'].replace(['S', 'C', 'Q'], [0, 1, 2])
-    train_data['Honorifics'] = train_data['Honorifics'].replace(['Mr', 'Mrs', 'Miss', 'Master', 'Rare'], [0, 1, 2, 3, 4])
+    # ↓↓↓ Преобразуем стороковые величины в числовые ↓↓↓
 
-    # Удаляем ненужные фичи
+    if handle_categorical:
+        train_data['Sex'] = train_data['Sex'].replace(['male', 'female'], [0, 1])
+        train_data['Embarked'] = train_data['Embarked'].replace(['S', 'C', 'Q'], [0, 1, 2])
+        train_data['Honorifics'] = train_data['Honorifics'].replace(['Mr', 'Mrs', 'Miss', 'Master', 'Rare'], [0, 1, 2, 3, 4])
+
+    # ↓↓↓ Удаляем ненужные фичи ↓↓↓
 
     train_data = train_data.drop(columns=['PassengerId', 'Name', 'Age', 'Ticket', 'Fare', 'Cabin'])
 

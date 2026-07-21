@@ -4,135 +4,66 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
 
-from config import config
-from data_handle import preprocessing
+from data_handle import *
+from models_sklearn import *
+from models_boost import *
 
 def train(config):
     train_data = pd.read_csv(config.paths.path_to_train)
 
-    # Предобработка данных
+    # ↓↓↓ Предобработка данных ↓↓↓
 
-    train_data = preprocessing(train_data)
-    X = train_data.drop(columns=['Survived'])
-    y = train_data['Survived']
+    train_data_handled = preprocessing(train_data, handle_categorical=True)
+    X = train_data_handled.drop(columns=['Survived'])
+    y = train_data_handled['Survived']
 
-    X_train, X_val, y_train, y_val = train_test_split(X, y,
-                                                      test_size=0.2,
-                                                      random_state=config.general.seed,
-                                                      shuffle=True
-    )
+    # ↓↓↓ Логистическая регрессия ↓↓↓
 
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.general.seed)
+    logreg_model, logreg_acc, logreg_std = train_model_sklearn(X, y, model_name='logistic_regression')
+    print(f'\nLogisticRegression \nMean Score: {logreg_acc}, Std Score: {logreg_std}')
 
-    # Логистическая регрессия
+    # ↓↓↓ Логистическая регрессия с L1-регуляризацией ↓↓↓
 
-    logreg_model = Pipeline([
-        ('scale', StandardScaler()),
-        ('model', LogisticRegression(max_iter=1000))
-    ])
-    logreg_scores = []
+    logreg_l1_model, logreg_l1_acc, logreg_l1_std = train_model_sklearn(X, y, model_name='logistic_regression_l1')
+    print(f'\nLogisticRegression with L1-reg \nMean Score: {logreg_l1_acc}, Std Score: {logreg_l1_std}')
 
-    for train_index, val_index in skf.split(X, y):
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
+    # ↓↓↓ Логистическая регрессия с L2-регуляризацией ↓↓↓
 
-        logreg_model.fit(X_train, y_train)
+    logreg_l2_model, logreg_l2_acc, logreg_l2_std = train_model_sklearn(X, y, model_name='logistic_regression_l2')
+    print(f'\nLogisticRegressin with L2-reg \nMean Score: {logreg_l2_acc}, Std Score: {logreg_l2_std}')
 
-        accuracy = logreg_model.score(X_val, y_val)
-        logreg_scores.append(accuracy)
+    # ↓↓↓ Логистическая регрессия с ElasticNet-регуляризацией ↓↓↓
 
-    logreg_acc = round(sum(logreg_scores) / len(logreg_scores), 2)
-    logreg_std = round(np.array(logreg_scores).std(), 2)
-    print(f'LogReg \nMean Score: {logreg_acc}, Std Score: {logreg_std}')
+    logreg_en_model, logreg_en_acc, logreg_en_std = train_model_sklearn(X, y, model_name='logistic_regression_elasticnet')
+    print(f'\nLogisticRegression with ElNet-reg \nMean Score: {logreg_en_acc}, Std Score: {logreg_en_std}')
 
-    logreg_model.fit(X, y)
+    # ↓↓↓ Метод ближайших соседей KNN ↓↓↓
 
-    # Логистическая регрессия с L1-регуляризацией
+    knn_model, knn_acc, knn_std = train_model_sklearn(X, y, model_name='knn')
+    print(f'\nKNN \nMean Score: {knn_acc}, Std Score: {knn_std}')
 
-    logreg_l1_model = Pipeline([
-        ('scale', StandardScaler()),
-        ('model', LogisticRegression(max_iter=1000,
-                                     penalty='l1',
-                                     solver='liblinear',
-                                     C=1))
-    ])
-    logreg_l1_scores = []
+    # ↓↓↓ Решающее дерево DecisionTree ↓↓↓
 
-    for train_index, val_index in skf.split(X, y):
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
+    dt_model, dt_acc, dt_std = train_model_sklearn(X, y, model_name='decision_tree')
+    print(f'\nDecisionTree \nMean Score: {dt_acc}, Std Score: {dt_std}')
 
-        logreg_l1_model.fit(X_train, y_train)
+    # ↓↓↓ Случайный лес RandomForest ↓↓↓
 
-        accuracy = logreg_l1_model.score(X_val, y_val)
-        logreg_l1_scores.append(accuracy)
+    rf_model, rf_acc, rf_std = train_model_sklearn(X, y, model_name='random_forest')
+    print(f'\nRandomForest \nMean Score: {rf_acc}, Std Score: {rf_std}')
 
-    logreg_l1_acc = round(sum(logreg_l1_scores) / len(logreg_l1_scores), 2)
-    logreg_l1_std = round(np.array(logreg_l1_scores).std(), 2)
-    print(f'\nLogReg with L1-reg \nMean Score: {logreg_l1_acc}, Std Score: {logreg_l1_std}')
+    # ↓↓↓ Бустинг CatBoost ↓↓↓
 
-    logreg_l1_model.fit(X, y)
+    # т.к. CatBoost может самостоятельно обрабатывать категориальные фичи, стоит использовать эту возможность
+    train_data_non_handled = preprocessing(train_data, handle_categorical=False)
+    X_non_handled = train_data_non_handled.drop(columns=['Survived'])
+    y_non_handled = train_data_non_handled['Survived']
 
-    # Логистическая регрессия с L2-регуляризацией
+    catboost_model, catboost_acc, catboost_std = train_catboost(X_non_handled, y_non_handled)
+    print(f'\nCatBoost \nMean Score: {catboost_acc}, Std Score: {catboost_std}')
 
-    logreg_l2_model = Pipeline([
-        ('scale', StandardScaler()),
-        ('model', LogisticRegression(max_iter=1000,
-                                     penalty='l2',
-                                     solver='lbfgs',
-                                     C=0.01))
-    ])
-    logreg_l2_scores = []
-
-    for train_index, val_index in skf.split(X, y):
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
-
-        logreg_l2_model.fit(X_train, y_train)
-
-        accuracy = logreg_l2_model.score(X_val, y_val)
-        logreg_l2_scores.append(accuracy)
-
-    logreg_l2_acc = round(sum(logreg_l2_scores) / len(logreg_l2_scores), 2)
-    logreg_l2_std = round(np.array(logreg_l2_scores).std(), 2)
-    print(f'\nLogReg with L2-reg \nMean Score: {logreg_l2_acc}, Std Score: {logreg_l2_std}')
-
-    logreg_l2_model.fit(X, y)
-
-    # Логистическая регрессия с ElasticNet-регуляризацией
-
-    logreg_en_model = Pipeline([
-        ('scale', StandardScaler()),
-        ('model', LogisticRegression(max_iter=1000,
-                                     penalty='elasticnet',
-                                     l1_ratio=0.5,
-                                     solver='saga',
-                                     C=1))
-    ])
-    logreg_en_scores = []
-
-    for train_index, val_index in skf.split(X, y):
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
-
-        logreg_en_model.fit(X_train, y_train)
-
-        accuracy = logreg_en_model.score(X_val, y_val)
-        logreg_en_scores.append(accuracy)
-
-    logreg_en_acc = round(sum(logreg_en_scores) / len(logreg_en_scores), 2)
-    logreg_en_std = round(np.array(logreg_en_scores).std(), 2)
-    print(f'\nLogReg with ElNet-reg \nMean Score: {logreg_en_acc}, Std Score: {logreg_en_std}')
-
-    logreg_l2_model.fit(X, y)
-
-    # KNN
-
+    # ↓↓↓ Бустинг LightGBM ↓↓↓
 
 
 def test(config):
