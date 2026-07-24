@@ -9,8 +9,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 from config import config
+from data_handle import *
 
 def train_model_sklearn(X, y, model_name='logistic_regression'):
+    X = preprocessing(X, handle_categorical='ordinal-encoding')
+
     model = None
     if model_name == 'logistic_regression':
         model = Pipeline([

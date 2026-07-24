@@ -1,12 +1,16 @@
 from catboost import CatBoostClassifier, cv, Pool
+import lightgbm as lgb
+from lightgbm import LGBMClassifier
 
 from config import config
+from data_handle import *
 
 
 def train_catboost(X, y):
+    X = preprocessing(X, handle_categorical='None')
+
     data_pool = Pool(data=X, label=y,
                      cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
-
 
     params={
         'iterations': 100,
@@ -33,6 +37,36 @@ def train_catboost(X, y):
                                depth=5,
                                loss_function='Logloss',
                                cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
-    model.fit(X, y, early_stopping_rounds=50, verbose=False)
+    model.fit(X, y, verbose=False)
+
+    return model, model_acc, model_std
+
+
+def train_lightgbm(X, y):
+    dataset = lgb.Dataset(data=X,
+                          label=y,
+                          feature_name=X.columns.tolist(),
+                          categorical_feature=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
+
+    params = {'objective': 'binary',
+              'leraning_rage': 0.1,
+              'num_leaves': 31,
+              'metric': 'accuracy',
+              'num_boost_round': 100,
+              'verbosity': -1
+    }
+
+    cv_output = lgb.cv(params=params,
+                       train_set=dataset,
+                       nfold=5,
+                       stratified=True,
+                       shuffle=True,
+                       return_cvbooster=True)
+
+    model_acc = round(cv_output['accuracy-mean'].items(), 2)
+    model_std = round(cv_output['accuracy-std'].items(), 2)
+
+    model = LGBMClassifier(objective='binary', n_estimators=10)
+    model.fit(X, y)
 
     return model, model_acc, model_std

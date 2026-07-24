@@ -5,18 +5,17 @@ import numpy as np
 import pandas as pd
 import torch
 
-from data_handle import *
 from models_sklearn import *
 from models_boost import *
 
 def train(config):
     train_data = pd.read_csv(config.paths.path_to_train)
 
-    # ↓↓↓ Предобработка данных ↓↓↓
-
-    train_data_handled = preprocessing(train_data, handle_categorical=True)
-    X = train_data_handled.drop(columns=['Survived'])
-    y = train_data_handled['Survived']
+    # Здесь раньше была предобработка данных, но т.к. каждная модель требует индивидуального подхода к
+    # категориальным фичам, данные полномочия были делигированны моделям
+    # TODO: Может стоит вернуть обратно, если каждая модель будет использовать one-hot-encoding (?)
+    X = train_data.drop(columns=['Survived'])
+    y = train_data['Survived']
 
     # ↓↓↓ Логистическая регрессия ↓↓↓
 
@@ -55,15 +54,19 @@ def train(config):
 
     # ↓↓↓ Бустинг CatBoost ↓↓↓
 
-    # т.к. CatBoost может самостоятельно обрабатывать категориальные фичи, стоит использовать эту возможность
-    train_data_non_handled = preprocessing(train_data, handle_categorical=False)
-    X_non_handled = train_data_non_handled.drop(columns=['Survived'])
-    y_non_handled = train_data_non_handled['Survived']
-
-    catboost_model, catboost_acc, catboost_std = train_catboost(X_non_handled, y_non_handled)
+    catboost_model, catboost_acc, catboost_std = train_catboost(X, y)
     print(f'\nCatBoost \nMean Score: {catboost_acc}, Std Score: {catboost_std}')
 
     # ↓↓↓ Бустинг LightGBM ↓↓↓
+
+    # train_data_non_handled = preprocessing(train_data, handle_categorical=False)
+    # X_non_handled = train_data_non_handled.drop(columns=['Survived'])
+    # y_non_handled = train_data_non_handled['Survived']
+    #
+    # print(X.dtypes)
+    # lightgbm_model, lightgbm_acc, lightgbm_std = train_lightgbm(X, y)
+    # print(f'\nLightGBM \nMean Score: {lightgbm_acc}, Std Score: {lightgbm_std}')
+
 
 
 def test(config):
