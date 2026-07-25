@@ -43,30 +43,34 @@ def train_catboost(X, y):
 
 
 def train_lightgbm(X, y):
+    X = preprocessing(X, handle_categorical='None')
+
     dataset = lgb.Dataset(data=X,
                           label=y,
                           feature_name=X.columns.tolist(),
                           categorical_feature=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
 
     params = {'objective': 'binary',
-              'leraning_rage': 0.1,
+              'learning_rate': 0.1,
               'num_leaves': 31,
-              'metric': 'accuracy',
-              'num_boost_round': 100,
-              'verbosity': -1
+              'metric': 'binary_error',
+              'num_iterations': 100,
+              'verbosity': -1,
     }
 
     cv_output = lgb.cv(params=params,
                        train_set=dataset,
                        nfold=5,
                        stratified=True,
-                       shuffle=True,
-                       return_cvbooster=True)
+                       shuffle=True)
 
-    model_acc = round(cv_output['accuracy-mean'].items(), 2)
-    model_std = round(cv_output['accuracy-std'].items(), 2)
+    model_acc = round(1 - cv_output['valid binary_error-mean'][-1], 2)
+    model_std = round(cv_output['valid binary_error-stdv'][-1], 2)
 
-    model = LGBMClassifier(objective='binary', n_estimators=10)
+    model = LGBMClassifier(objective='binary',
+                           n_estimators=100,
+                           learning_rate=0.1,
+                           num_leaves=31)
     model.fit(X, y)
 
     return model, model_acc, model_std
