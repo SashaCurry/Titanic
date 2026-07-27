@@ -7,7 +7,7 @@ def preprocessing(train_data, handle_categorical='None'):
 
     train_data.loc[train_data['Embarked'].isnull(), 'Embarked'] = 'S'
 
-    train_data['Honorifics'] = train_data['Name'].str.extract('([A-Z][a-z]+)\.', expand=True)
+    train_data['Honorifics'] = train_data['Name'].str.extract(r'([A-Z][a-z]+)\.', expand=True)
     train_data['Honorifics'] = train_data['Honorifics'].replace(['Mlle', 'Ms'], 'Miss')
     train_data['Honorifics'] = train_data['Honorifics'].replace('Mme', 'Mrs')
     train_data['Honorifics'] = train_data.loc[~train_data['Honorifics'].isin(['Mr', 'Mrs', 'Miss', 'Master']), 'Honorifics'] = 'Rare'
@@ -41,7 +41,7 @@ def preprocessing(train_data, handle_categorical='None'):
     # ↓↓↓ Обработка категориальных признаков в соответствие с запросом ↓↓↓
 
     if handle_categorical.lower() == 'none':
-        train_data['Alone'] = train_data['Alone'].astype('category')
+        train_data['Alone'] = train_data['Alone'].astype(int).astype('category')
         train_data['Sex'] = train_data['Sex'].astype('category')
         train_data['Embarked'] = train_data['Embarked'].astype('category')
         train_data['Honorifics'] = train_data['Honorifics'].astype('category')

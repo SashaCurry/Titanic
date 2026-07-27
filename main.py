@@ -11,12 +11,12 @@ from models_boost import *
 def train(config):
     train_data = pd.read_csv(config.paths.path_to_train)
 
-    # Здесь раньше была предобработка данных, но т.к. каждная модель требует индивидуального подхода к
-    # категориальным фичам, данные полномочия были делигированны моделям
+    # Здесь раньше была предобработка данных, но т.к. каждная модель требует индивидуального подхода
+    # к категориальным фичам, данные полномочия были делигированны моделям
     # TODO: Может стоит вернуть обратно, если каждая модель будет использовать one-hot-encoding (?)
     X = train_data.drop(columns=['Survived'])
     y = train_data['Survived']
-    '''
+
     # ↓↓↓ Логистическая регрессия ↓↓↓
 
     logreg_model, logreg_acc, logreg_std = train_model_sklearn(X, y, model_name='logistic_regression')
@@ -56,11 +56,17 @@ def train(config):
 
     catboost_model, catboost_acc, catboost_std = train_catboost(X, y)
     print(f'\nCatBoost \nMean Accuracy: {catboost_acc}, Std Accuracy: {catboost_std}')
-    '''
+
     # ↓↓↓ Бустинг LightGBM ↓↓↓
 
     lightgbm_model, lightgbm_acc, lightgbm_std = train_lightgbm(X, y)
     print(f'\nLightGBM \nMean Accuracy: {lightgbm_acc}, Std Accuracy: {lightgbm_std}')
+
+
+    # ↓↓↓ Бустинг XGBoost ↓↓↓
+
+    xgboost_model, xgboost_acc, xgboost_std = train_xgboost(X, y)
+    print(f'\nXGBoost \nMean Accuracy: {xgboost_acc}, Std Accuracy: {xgboost_std}')
 
 
 
