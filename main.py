@@ -7,6 +7,7 @@ import torch
 
 from models_sklearn import *
 from models_boost import *
+from model_nn import *
 
 def train(config):
     train_data = pd.read_csv(config.paths.path_to_train)
@@ -68,6 +69,10 @@ def train(config):
     xgboost_model, xgboost_acc, xgboost_std = train_xgboost(X, y)
     print(f'\nXGBoost \nMean Accuracy: {xgboost_acc}, Std Accuracy: {xgboost_std}')
 
+    # ↓↓↓ Нейронная сеть ↓↓↓
+
+    print()
+    train_nn(X, y)
 
 
 def test(config):

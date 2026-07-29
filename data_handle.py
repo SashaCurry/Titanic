@@ -10,7 +10,7 @@ def preprocessing(train_data, handle_categorical='None'):
     train_data['Honorifics'] = train_data['Name'].str.extract(r'([A-Z][a-z]+)\.', expand=True)
     train_data['Honorifics'] = train_data['Honorifics'].replace(['Mlle', 'Ms'], 'Miss')
     train_data['Honorifics'] = train_data['Honorifics'].replace('Mme', 'Mrs')
-    train_data['Honorifics'] = train_data.loc[~train_data['Honorifics'].isin(['Mr', 'Mrs', 'Miss', 'Master']), 'Honorifics'] = 'Rare'
+    train_data.loc[~train_data['Honorifics'].isin(['Mr', 'Mrs', 'Miss', 'Master']), 'Honorifics'] = 'Rare'
 
     mean_ages = train_data.groupby('Honorifics')['Age'].mean()
     for honorific in mean_ages.index:

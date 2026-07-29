@@ -12,6 +12,7 @@ config = {
     },
     'training': {
         'is_train': True,
+        'device': 'cuda'
     },
     'dataloader_params': {
     },
