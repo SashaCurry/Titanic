@@ -8,13 +8,13 @@ import torch
 from models_sklearn import *
 from models_boost import *
 from model_nn import *
+from models_ensembles import *
 
 def train(config):
     train_data = pd.read_csv(config.paths.path_to_train)
 
-    # Здесь раньше была предобработка данных, но т.к. каждная модель требует индивидуального подхода
+    # Здесь раньше была предобработка данных, но т.к. каждая модель требует индивидуального подхода
     # к категориальным фичам, данные полномочия были делигированны моделям
-    # TODO: Может стоит вернуть обратно, если каждая модель будет использовать one-hot-encoding (?)
     X = train_data.drop(columns=['Survived'])
     y = train_data['Survived']
 
@@ -73,6 +73,21 @@ def train(config):
 
     print()
     train_nn(X, y)
+    
+    # ↓↓↓ Ансамбль Bagging ↓↓↓
+
+    bagging_model, bagging_acc, bagging_std = train_bagging(X, y)
+    print(f'\nBagging \nMean Accuracy: {bagging_acc}, Std Accuracy: {bagging_std}')
+
+    # ↓↓↓ Ансамбль Stacking via LogReg ↓↓↓
+
+    stacking_models, stacking_acc, stacking_std = train_stacking(X, y)
+    print(f'\nStacking via LogReg \nMean Accuracy: {stacking_acc}, Std Accuracy: {stacking_std}')
+
+    # ↓↓↓ Ансамбль Stacking via LogReg-L2 ↓↓↓
+
+    stacking_l2_models, stacking_l2_acc, stacking_l2_std = train_stacking_l2(X, y)
+    print(f'\nStacking via LogReg \nMean Accuracy: {stacking_l2_acc}, Std Accuracy: {stacking_l2_std}')
 
 
 def test(config):
