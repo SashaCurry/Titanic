@@ -18,80 +18,87 @@ def train(config):
     X = train_data.drop(columns=['Survived'])
     y = train_data['Survived']
 
+    model_data = []
+
     # ↓↓↓ Логистическая регрессия ↓↓↓
 
     logreg_model, logreg_acc, logreg_std = train_model_sklearn(X, y, model_name='logistic_regression')
-    print(f'\nLogisticRegression \nMean Accuracy: {logreg_acc}, Std Accuracy: {logreg_std}')
+    model_data.append(['LogReg', logreg_acc, logreg_std])
 
     # ↓↓↓ Логистическая регрессия с L1-регуляризацией ↓↓↓
 
     logreg_l1_model, logreg_l1_acc, logreg_l1_std = train_model_sklearn(X, y, model_name='logistic_regression_l1')
-    print(f'\nLogisticRegression with L1-reg \nMean Accuracy: {logreg_l1_acc}, Std Accuracy: {logreg_l1_std}')
+    model_data.append(['LogReg-L1', logreg_l1_acc, logreg_l1_std])
 
     # ↓↓↓ Логистическая регрессия с L2-регуляризацией ↓↓↓
 
     logreg_l2_model, logreg_l2_acc, logreg_l2_std = train_model_sklearn(X, y, model_name='logistic_regression_l2')
-    print(f'\nLogisticRegressin with L2-reg \nMean Accuracy: {logreg_l2_acc}, Std Accuracy: {logreg_l2_std}')
+    model_data.append(['LogReg-L2', logreg_l2_acc, logreg_l2_std])
 
     # ↓↓↓ Логистическая регрессия с ElasticNet-регуляризацией ↓↓↓
 
     logreg_en_model, logreg_en_acc, logreg_en_std = train_model_sklearn(X, y, model_name='logistic_regression_elasticnet')
-    print(f'\nLogisticRegression with ElNet-reg \nMean Accuracy: {logreg_en_acc}, Std Accuracy: {logreg_en_std}')
+    model_data.append(['LogReg-ElNet', logreg_en_acc, logreg_en_std])
 
     # ↓↓↓ Метод ближайших соседей KNN ↓↓↓
 
     knn_model, knn_acc, knn_std = train_model_sklearn(X, y, model_name='knn')
-    print(f'\nKNN \nMean Accuracy: {knn_acc}, Std Accuracy: {knn_std}')
+    model_data.append(['KNN', knn_acc, knn_std])
 
     # ↓↓↓ Решающее дерево DecisionTree ↓↓↓
 
     dt_model, dt_acc, dt_std = train_model_sklearn(X, y, model_name='decision_tree')
-    print(f'\nDecisionTree \nMean Accuracy: {dt_acc}, Std Accuracy: {dt_std}')
+    model_data.append(['DecisionTree', dt_acc, dt_std])
 
     # ↓↓↓ Случайный лес RandomForest ↓↓↓
 
     rf_model, rf_acc, rf_std = train_model_sklearn(X, y, model_name='random_forest')
-    print(f'\nRandomForest \nMean Accuracy: {rf_acc}, Std Accuracy: {rf_std}')
+    model_data.append(['RandomForest', rf_acc, rf_std])
 
     # ↓↓↓ Бустинг CatBoost ↓↓↓
 
     catboost_model, catboost_acc, catboost_std = train_catboost(X, y)
-    print(f'\nCatBoost \nMean Accuracy: {catboost_acc}, Std Accuracy: {catboost_std}')
+    model_data.append(['CatBoost', catboost_acc, catboost_std])
 
     # ↓↓↓ Бустинг LightGBM ↓↓↓
 
     lightgbm_model, lightgbm_acc, lightgbm_std = train_lightgbm(X, y)
-    print(f'\nLightGBM \nMean Accuracy: {lightgbm_acc}, Std Accuracy: {lightgbm_std}')
-
+    model_data.append(['LightGBM', lightgbm_acc, lightgbm_std])
 
     # ↓↓↓ Бустинг XGBoost ↓↓↓
 
     xgboost_model, xgboost_acc, xgboost_std = train_xgboost(X, y)
-    print(f'\nXGBoost \nMean Accuracy: {xgboost_acc}, Std Accuracy: {xgboost_std}')
+    model_data.append(['XGBoost', xgboost_acc, xgboost_std])
 
     # ↓↓↓ Нейронная сеть ↓↓↓
 
-    print()
-    train_nn(X, y)
+    nn_model, nn_acc = train_nn(X, y)
+    model_data.append(['NeuralNetwork', nn_acc, '—'])
     
     # ↓↓↓ Ансамбль Bagging ↓↓↓
 
     bagging_model, bagging_acc, bagging_std = train_bagging(X, y)
-    print(f'\nBagging \nMean Accuracy: {bagging_acc}, Std Accuracy: {bagging_std}')
+    model_data.append(['Bagging', bagging_acc, bagging_std])
 
     # ↓↓↓ Ансамбль Stacking via LogReg ↓↓↓
 
     stacking_models, stacking_acc, stacking_std = train_stacking(X, y)
-    print(f'\nStacking via LogReg \nMean Accuracy: {stacking_acc}, Std Accuracy: {stacking_std}')
+    model_data.append(['Stacking via LogReg', stacking_acc, stacking_std])
 
     # ↓↓↓ Ансамбль Stacking via LogReg-L2 ↓↓↓
 
     stacking_l2_models, stacking_l2_acc, stacking_l2_std = train_stacking_l2(X, y)
-    print(f'\nStacking via LogReg \nMean Accuracy: {stacking_l2_acc}, Std Accuracy: {stacking_l2_std}')
+    model_data.append(['Stacking via LogReg-L2', stacking_l2_acc, stacking_l2_std])
 
+    # Total output
+    header = f'{"Approach":<22} | {"CV":>10} | {"CV STD":>10}'
+    print(header)
+    print('-' * len(header))
 
-def test(config):
-    pass
+    for model_name, model_acc, model_std in model_data:
+        model_std = f'{model_std:.2f}' if isinstance(model_std, (int, float)) else str(model_std)
+        model_acc = f'{model_acc:.2f}'
+        print(f'{model_name:<22} | {model_acc:>10} | {model_std:>10}')
 
 
 def main(config):
@@ -104,10 +111,7 @@ def main(config):
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(config.general.seed)
 
-    if config.training.is_train:
-        train(config)
-    else:
-        test(config)
+    train(config)
 
 
 if __name__ == "__main__":

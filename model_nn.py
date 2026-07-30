@@ -85,7 +85,7 @@ def train_nn(X, y):
     train_loader = DataLoader(dataset=train_data, batch_size=32, shuffle=True)
     val_loader = DataLoader(dataset=val_data, batch_size=32, shuffle=True)
 
-    # Кортеж для Embedding-слоёв
+    # Кортежи для Embedding-слоёв
     cat_dims = [(X[col].nunique(), min(50, X[col].nunique() // 2 + 1)) for col in cat_cols]
 
     model = TitanicNN(num_features_count=len(num_cols), cat_dims=cat_dims).to(config.training.device)
@@ -96,11 +96,10 @@ def train_nn(X, y):
     num_epochs = 20
 
     # ЦИКЛ ОБУЧЕНИЯ
+    mean_val_acc = 0
     for epoch in range(num_epochs):
-        # ТРЕНИРОВКА
-        running_train_loss = []
-        true_answer = 0
 
+        # ТРЕНИРОВКА
         model.train()
         for X_num_batch, X_cat_batch, y_batch in train_loader:
             # Прямой проход + расчёт ошибки модели
@@ -114,34 +113,21 @@ def train_nn(X, y):
             # Шаг оптимизатора
             optimizer.step()
 
-            running_train_loss.append(loss.item())
-            true_answer += ((pred > 0.5).float() == y_batch.view(-1, 1)).sum().item()
-
-        # Accuracy и Loss на тренировочных данных
-        running_train_acc = true_answer / len(train_data)
-        mean_train_loss = sum(running_train_loss) / len(running_train_loss)
-
         # ВАЛИДАЦИЯ
-        running_val_loss = []
         true_answer = 0
 
         model.eval()
         with torch.no_grad():
             for X_num_batch, X_cat_batch, y_batch in val_loader:
-                # Прямой проход + расчёт ошибки модели
+                # Прямой проход
                 pred = model(X_num_batch, X_cat_batch)
-                loss = loss_fn(pred, y_batch.view(-1, 1))
 
-                running_val_loss.append(loss.item())
+                # Количество правильных ответов, чтобы потом посчитать Accuracy
                 true_answer += ((pred > 0.5).float() == y_batch.view(-1, 1)).sum().item()
 
-        # Accuracy и Loss на валидационных данных
-        running_val_acc = true_answer / len(val_data)
-        mean_val_loss = sum(running_val_loss) / len(running_val_loss)
+        # Accuracy на валидационных данных
+        mean_val_acc = true_answer / len(val_data)
 
         scheduler.step()
 
-        if (epoch + 1) % 10 == 0:
-            print(f'Epoch [{epoch + 1}/{num_epochs}]: '
-                  f'train_loss: {mean_train_loss:.4f}, train_accuracy: {running_train_acc:.4f}, '
-                  f'val_loss: {mean_val_loss:.4f}, val_accuracy: {running_val_acc:.4f}')
+    return model, mean_val_acc
