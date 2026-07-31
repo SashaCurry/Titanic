@@ -12,18 +12,13 @@ def train_catboost(X, y):
     data_pool = cb.Pool(data=X, label=y,
                         cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
 
-    params={
-        'iterations': 100,
-        'learning_rate': 0.075,
-        'depth': 5,
-        'loss_function': 'Logloss',
-        'eval_metric': 'Accuracy'
-    }
+    params={**config.catboost,
+            'eval_metric': 'Accuracy'}
 
     cv_data = cb.cv(
         pool=data_pool,
         params=params,
-        fold_count=config.split.n_splits,
+        fold_count=config.training.n_splits,
         shuffle=True,
         partition_random_seed=config.general.seed,
         stratified=True,
@@ -35,10 +30,7 @@ def train_catboost(X, y):
     model_std = round(cv_data.tail(1)['test-Accuracy-std'].item(), 2)
 
     model = cb.CatBoostClassifier(
-        iterations=100,
-        learning_rate=0.075,
-        depth=5,
-        loss_function='Logloss',
+        **config.catboost,
         cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics']
     )
     model.fit(X, y, verbose=False)
@@ -57,18 +49,16 @@ def train_lightgbm(X, y):
     )
 
     params = {
+        **config.lightgbm,
         'objective': 'binary',
-        'learning_rate': 0.1,
-        'num_leaves': 31,
         'metric': 'binary_error',
-        'num_iterations': 100,
         'verbosity': -1,
     }
 
     cv_output = lgb.cv(
         params=params,
         train_set=dataset,
-        nfold=config.split.n_splits,
+        nfold=config.training.n_splits,
         stratified=True,
         shuffle=True
     )
@@ -78,9 +68,7 @@ def train_lightgbm(X, y):
 
     model = lgb.LGBMClassifier(
         objective='binary',
-        n_estimators=100,
-        learning_rate=0.1,
-        num_leaves=31
+        **config.lightgbm
     )
     model.fit(X, y)
 
@@ -92,19 +80,22 @@ def train_xgboost(X ,y):
 
     dataset = xgb.DMatrix(data=X, label=y, enable_categorical=True)
 
+    # В XGBoost при кросс-валидации параметр num_boost_round
+    # указывается отдельно, поэтому приходится его явно отделить
+    params_from_config = dict(**config.xgboost)
+    num_boost_round = params_from_config.pop('num_boost_round')
+
     params = {
+        **params_from_config,
         'objective': 'binary:logistic',
-        'max_depth': 5,
-        'learning_rate': 0.1,
         'tree_method': 'hist',
-        'subsample': 0.75
     }
 
     cv_result = xgb.cv(
         params=params,
         dtrain=dataset,
-        num_boost_round=1000,
-        nfold=config.split.n_splits,
+        num_boost_round=num_boost_round,
+        nfold=config.training.n_splits,
         metrics='error',
         early_stopping_rounds=10,
     )
@@ -114,10 +105,12 @@ def train_xgboost(X ,y):
 
     model = xgb.XGBClassifier(
         objective='binary:logistic',
-        n_estimators=100,
-        learning_rate=0.1,
-        tree_method='hist',
-        enable_categorical=True
+        n_estimators=config.xgboost.num_boost_round,
+        learning_rate=config.xgboost.learning_rate,
+        max_depth=config.xgboost.max_depth,
+        subsample=config.xgboost.subsample,
+        enable_categorical=True,
+        tree_method='hist'
     )
     model.fit(X, y)
 

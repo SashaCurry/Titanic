@@ -18,51 +18,35 @@ def train_model_sklearn(X, y, model_name='logistic_regression'):
     if model_name == 'logistic_regression':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(max_iter=1000))
+            ('model', LogisticRegression(**config.logreg))
         ])
     elif model_name == 'logistic_regression_l1':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(max_iter=1000,
-                                         penalty='l1',
-                                         solver='liblinear',
-                                         C=1))
+            ('model', LogisticRegression(**config.logreg_l1))
         ])
     elif model_name == 'logistic_regression_l2':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(max_iter=1000,
-                                         penalty='l2',
-                                         solver='lbfgs',
-                                         C=0.01))
+            ('model', LogisticRegression(**config.logreg_l2))
         ])
     elif model_name == 'logistic_regression_elasticnet':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(max_iter=1000,
-                                         penalty='elasticnet',
-                                         l1_ratio=0.5,
-                                         solver='saga',
-                                         C=1))
+            ('model', LogisticRegression(**config.logreg_elnet))
         ])
     elif model_name == 'knn':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', KNeighborsClassifier(n_neighbors=6,
-                                           weights='uniform',
-                                           metric='chebyshev'))
+            ('model', KNeighborsClassifier(**config.knn))
         ])
     elif model_name == 'decision_tree':
-        model = DecisionTreeClassifier(max_depth=4,
-                                       random_state=config.general.seed,
-                                       criterion='gini',
-                                       splitter='best')
+        model = DecisionTreeClassifier(**config.decision_tree)
     elif model_name == 'random_forest':
-        model = RandomForestClassifier(n_estimators=50,
-                                       random_state=config.general.seed,
-                                       min_samples_leaf=2)
+        model = RandomForestClassifier(**config.random_forest,
+                                       random_state=config.general.seed)
 
-    skf = StratifiedKFold(n_splits=config.split.n_splits, shuffle=True, random_state=config.general.seed)
+    skf = StratifiedKFold(n_splits=config.training.n_splits, shuffle=True, random_state=config.general.seed)
     scores = []
 
     for train_index, val_index in skf.split(X, y):

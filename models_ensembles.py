@@ -1,9 +1,7 @@
 import numpy as np
-from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
+import sklearn
+from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import cross_val_score, cross_val_predict
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
 
 from config import config
 from data_handle import *
@@ -12,12 +10,14 @@ from data_handle import *
 def train_bagging(X, y):
     X = preprocessing(X, handle_categorical='One-hot-encoding')
 
-    base_model = DecisionTreeClassifier(max_depth=6)
-    bagging_model = BaggingClassifier(estimator=base_model,
-                                      n_estimators=100,
-                                      random_state=config.general.seed)
+    submodule = getattr(sklearn, config.bagging.base_model.module)
+    base_model = getattr(submodule, config.bagging.base_model.name)(**config.bagging.base_model.params)
 
-    scores = cross_val_score(bagging_model, X, y, cv=5)
+    bagging_model = BaggingClassifier(estimator=base_model,
+                                      random_state=config.general.seed,
+                                      **config.bagging.params)
+
+    scores = cross_val_score(bagging_model, X, y, cv=config.training.n_splits)
     model_acc = round(scores.mean(), 2)
     model_std = round(scores.std(), 2)
 
@@ -30,21 +30,23 @@ def train_stacking(X, y):
     X = preprocessing(X, handle_categorical='One-hot-encoding')
 
     # Создаём базовые модели
-    model_1 = KNeighborsClassifier(n_neighbors=6)
-    model_2 = DecisionTreeClassifier(max_depth=3, random_state=config.general.seed)
-    model_3 = RandomForestClassifier(n_estimators=100, random_state=config.general.seed)
-    base_models = [model_1, model_2, model_3]
+    base_models = []
+    for model in config.stacking.base_models:
+        submodule = getattr(sklearn, model.module)
+        base_model = getattr(submodule, model.name)(**model.params)
+        base_models.append(base_model)
 
     # Получаем мета-признаки для итоговой модели
     X_meta = np.zeros((X.shape[0], len(base_models)))
     for idx, model in enumerate(base_models):
-        X_meta[:, idx] = cross_val_predict(model, X, y, cv=5)
+        X_meta[:, idx] = cross_val_predict(model, X, y, cv=config.training.n_splits)
 
     # Создаём мета-модель
-    meta_model = LogisticRegression(max_iter=1000)
+    submodule = getattr(sklearn, config.stacking.meta_model.module)
+    meta_model = getattr(submodule, config.stacking.meta_model.name)(**config.stacking.meta_model.params)
 
     # Метрики мета-модели
-    scores = cross_val_score(meta_model, X, y, cv=5)
+    scores = cross_val_score(meta_model, X, y, cv=config.training.n_splits)
     meta_model_acc = round(scores.mean(), 2)
     meta_model_std = round(scores.std(), 2)
 
@@ -61,21 +63,23 @@ def train_stacking_l2(X, y):
     X = preprocessing(X, handle_categorical='One-hot-encoding')
 
     # Создаём базовые модели
-    model_1 = KNeighborsClassifier(n_neighbors=6)
-    model_2 = DecisionTreeClassifier(max_depth=3, random_state=config.general.seed)
-    model_3 = RandomForestClassifier(n_estimators=100, random_state=config.general.seed)
-    base_models = [model_1, model_2, model_3]
+    base_models = []
+    for model in config.stacking_l2.base_models:
+        submodule = getattr(sklearn, model.module)
+        base_model = getattr(submodule, model.name)(**model.params)
+        base_models.append(base_model)
 
     # Получаем мета-признаки для итоговой модели
     X_meta = np.zeros((X.shape[0], len(base_models)))
     for idx, model in enumerate(base_models):
-        X_meta[:, idx] = cross_val_predict(model, X, y, cv=5)
+        X_meta[:, idx] = cross_val_predict(model, X, y, cv=config.training.n_splits)
 
     # Создаём мета-модель
-    meta_model = LogisticRegression(max_iter=1000, penalty='l2')
+    submodule = getattr(sklearn, config.stacking_l2.meta_model.module)
+    meta_model = getattr(submodule, config.stacking_l2.meta_model.name)(**config.stacking.meta_model.params)
 
     # Метрики мета-модели
-    scores = cross_val_score(meta_model, X, y, cv=5)
+    scores = cross_val_score(meta_model, X, y, cv=config.training.n_splits)
     meta_model_acc = round(scores.mean(), 2)
     meta_model_std = round(scores.std(), 2)
 

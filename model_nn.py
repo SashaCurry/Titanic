@@ -89,11 +89,11 @@ def train_nn(X, y):
     cat_dims = [(X[col].nunique(), min(50, X[col].nunique() // 2 + 1)) for col in cat_cols]
 
     model = TitanicNN(num_features_count=len(num_cols), cat_dims=cat_dims).to(config.training.device)
-    loss_fn = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100, eta_min=1e-6)
+    loss_fn = getattr(nn, config.neural_network.loss_fn.name)()
+    optimizer = getattr(torch.optim, config.neural_network.optimizer.name)(model.parameters(), **config.neural_network.optimizer.params)
+    scheduler = getattr(torch.optim.lr_scheduler, config.neural_network.scheduler.name)(optimizer, **config.neural_network.scheduler.params)
 
-    num_epochs = 20
+    num_epochs = config.neural_network.num_epochs
 
     # ЦИКЛ ОБУЧЕНИЯ
     mean_val_acc = 0
