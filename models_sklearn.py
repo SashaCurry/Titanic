@@ -11,39 +11,40 @@ from sklearn.ensemble import RandomForestClassifier
 from config import config
 from data_handle import *
 
+
 def train_model_sklearn(X, y, model_name='logistic_regression'):
-    X = preprocessing(X, handle_categorical='ordinal-encoding')
+    X = preprocessing(X, handle_categorical='One-hot-encoding')
 
     model = None
     if model_name == 'logistic_regression':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(**config.logreg))
+            ('model', LogisticRegression(**config.logreg.params))
         ])
     elif model_name == 'logistic_regression_l1':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(**config.logreg_l1))
+            ('model', LogisticRegression(**config.logreg_l1.params))
         ])
     elif model_name == 'logistic_regression_l2':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(**config.logreg_l2))
+            ('model', LogisticRegression(**config.logreg_l2.params))
         ])
     elif model_name == 'logistic_regression_elasticnet':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', LogisticRegression(**config.logreg_elnet))
+            ('model', LogisticRegression(**config.logreg_elnet.params))
         ])
     elif model_name == 'knn':
         model = Pipeline([
             ('scale', StandardScaler()),
-            ('model', KNeighborsClassifier(**config.knn))
+            ('model', KNeighborsClassifier(**config.knn.params))
         ])
     elif model_name == 'decision_tree':
-        model = DecisionTreeClassifier(**config.decision_tree)
+        model = DecisionTreeClassifier(**config.decision_tree.params)
     elif model_name == 'random_forest':
-        model = RandomForestClassifier(**config.random_forest,
+        model = RandomForestClassifier(**config.random_forest.params,
                                        random_state=config.general.seed)
 
     skf = StratifiedKFold(n_splits=config.training.n_splits, shuffle=True, random_state=config.general.seed)
@@ -63,3 +64,14 @@ def train_model_sklearn(X, y, model_name='logistic_regression'):
 
     model.fit(X, y)
     return model, model_acc, model_std
+
+
+def test_model_sklearn(X, model, model_name):
+    X_test = preprocessing(X, handle_categorical='One-hot-encoding')
+
+    preds = model.predict(X_test)
+
+    df = pd.DataFrame({'PassengerId': X['PassengerId'],
+                       'Survived': preds})
+    df.to_csv(path_or_buf=f'{config.paths.path_save_csv}{model_name}_preds.csv',
+              index=False)

@@ -12,7 +12,7 @@ def train_catboost(X, y):
     data_pool = cb.Pool(data=X, label=y,
                         cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics'])
 
-    params={**config.catboost,
+    params={**config.catboost.params,
             'eval_metric': 'Accuracy'}
 
     cv_data = cb.cv(
@@ -30,7 +30,7 @@ def train_catboost(X, y):
     model_std = round(cv_data.tail(1)['test-Accuracy-std'].item(), 2)
 
     model = cb.CatBoostClassifier(
-        **config.catboost,
+        **config.catboost.params,
         cat_features=['Age_Group', 'Fare_Range', 'Alone', 'Sex', 'Embarked', 'Honorifics']
     )
     model.fit(X, y, verbose=False)
@@ -49,7 +49,7 @@ def train_lightgbm(X, y):
     )
 
     params = {
-        **config.lightgbm,
+        **config.lightgbm.params,
         'objective': 'binary',
         'metric': 'binary_error',
         'verbosity': -1,
@@ -68,7 +68,7 @@ def train_lightgbm(X, y):
 
     model = lgb.LGBMClassifier(
         objective='binary',
-        **config.lightgbm
+        **config.lightgbm.params
     )
     model.fit(X, y)
 
@@ -82,7 +82,7 @@ def train_xgboost(X ,y):
 
     # В XGBoost при кросс-валидации параметр num_boost_round
     # указывается отдельно, поэтому приходится его явно отделить
-    params_from_config = dict(**config.xgboost)
+    params_from_config = dict(**config.xgboost.params)
     num_boost_round = params_from_config.pop('num_boost_round')
 
     params = {
@@ -104,14 +104,23 @@ def train_xgboost(X ,y):
     model_std = round(cv_result.tail(1)['test-error-std'].item(), 2)
 
     model = xgb.XGBClassifier(
+        **params_from_config,
         objective='binary:logistic',
-        n_estimators=config.xgboost.num_boost_round,
-        learning_rate=config.xgboost.learning_rate,
-        max_depth=config.xgboost.max_depth,
-        subsample=config.xgboost.subsample,
+        n_estimators=num_boost_round,
         enable_categorical=True,
         tree_method='hist'
     )
     model.fit(X, y)
 
     return model, model_acc, model_std
+
+
+def test_boost(X, model, model_name):
+    X_test = preprocessing(X, handle_categorical='None')
+
+    preds = model.predict(X_test)
+
+    df = pd.DataFrame({'PassengerId': X['PassengerId'],
+                       'Survived': preds})
+    df.to_csv(path_or_buf=f'{config.paths.path_save_csv}{model_name}_preds.csv',
+              index=False)

@@ -13,8 +13,12 @@ def preprocessing(train_data, handle_categorical='None'):
     train_data.loc[~train_data['Honorifics'].isin(['Mr', 'Mrs', 'Miss', 'Master']), 'Honorifics'] = 'Rare'
 
     mean_ages = train_data.groupby('Honorifics')['Age'].mean()
-    for honorific in mean_ages.index:
-        train_data.loc[(train_data['Age'].isnull()) & (train_data['Honorifics'] == honorific), 'Age'] = mean_ages[honorific]
+    for honorific, mean_age in mean_ages.items():
+        train_data.loc[train_data['Age'].isnull() & (train_data['Honorifics'] == honorific), 'Age'] = mean_age
+
+    mean_fare = train_data.groupby('Pclass')['Fare'].mean()
+    for pclass, fare in mean_fare.items():
+        train_data.loc[train_data['Fare'].isnull() & (train_data['Pclass'] == pclass), 'Fare'] = fare
 
     # ↓↓↓ Преобразуем непрерывные величины в дискретные ↓↓↓
 

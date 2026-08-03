@@ -6,6 +6,9 @@ from config import config
 from data_handle import *
 
 
+#TODO: Изначально класс мне показалсь нормальным, но когда дошёл до загрузки весов модели,
+#      понял, что надо самому высчитывать num_features_count и cat_dims, если сохранять только веса.
+#      Вопрос в проверующему: это нормально? Или всё-таки надо упрощать создание модели???
 class TitanicNN(nn.Module):
     def __init__(self, num_features_count, cat_dims):
         """
@@ -130,4 +133,24 @@ def train_nn(X, y):
 
         scheduler.step()
 
-    return model, mean_val_acc
+    return model, round(mean_val_acc, 2)
+
+
+def test_nn(X, model):
+    X_test = preprocessing(X, handle_categorical='Ordinal-encoding')
+
+    num_cols = ['Family_Size', 'Parch', 'Pclass', 'SibSp']
+    cat_cols = ['Age_Group', 'Alone', 'Embarked', 'Fare_Range', 'Honorifics', 'Sex']
+
+    X_test_num_tensor = torch.tensor(data=X_test[num_cols].values,
+                                     dtype=torch.float32)
+    X_test_cat_tensor = torch.tensor(data=X_test[cat_cols].values,
+                                     dtype=torch.long)
+
+    with torch.no_grad():
+        preds = model(X_test_num_tensor, X_test_cat_tensor).numpy().flatten()
+    preds_classes = (preds > 0.5).astype(int)
+
+    df = pd.DataFrame({'PassengerId': X['PassengerId'],
+                       'Survived': preds_classes})
+    df.to_csv(path_or_buf=f'{config.paths.path_save_csv}nn_preds.csv', index=False)

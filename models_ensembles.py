@@ -26,6 +26,17 @@ def train_bagging(X, y):
     return bagging_model, model_acc, model_std
 
 
+def test_bagging(X, model, model_name='bagging'):
+    X_test = preprocessing(X, handle_categorical='One-hot-encoding')
+
+    preds = model.predict(X_test)
+
+    df = pd.DataFrame({'PassengerId': X['PassengerId'],
+                       'Survived': preds})
+    df.to_csv(path_or_buf=f'{config.paths.path_save_csv}{model_name}_bagging.csv',
+              index=False)
+
+
 def train_stacking(X, y):
     X = preprocessing(X, handle_categorical='One-hot-encoding')
 
@@ -59,6 +70,7 @@ def train_stacking(X, y):
 
     return models, meta_model_acc, meta_model_std
 
+
 def train_stacking_l2(X, y):
     X = preprocessing(X, handle_categorical='One-hot-encoding')
 
@@ -91,3 +103,20 @@ def train_stacking_l2(X, y):
     models.append(meta_model.fit(X, y))
 
     return models, meta_model_acc, meta_model_std
+
+
+def test_stacking(X, models, model_name='stacking'):
+    X_test = preprocessing(X, handle_categorical='One-hot-encoding')
+
+    model_meta = models.pop()
+
+    X_meta = np.zeros((X.shape[0], len(models)))
+    for idx, model in enumerate(models):
+        X_meta[:, idx] = model.predict(X_test)
+
+    preds = model_meta.predict(X_test)
+
+    df = pd.DataFrame({'PassengerId': X['PassengerId'],
+                       'Survived': preds})
+    df.to_csv(path_or_buf=f'{config.paths.path_save_csv}{model_name}_preds.csv',
+              index=False)

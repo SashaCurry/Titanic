@@ -7,67 +7,116 @@ config = {
         'num_classes': 2
     },
     'paths': {
-        'path_to_train': './content/train.csv',
-        'path_to_test': './content/test.csv'
+        'path_to_train': './content/data/train.csv',
+        'path_to_test': './content/data/test.csv',
+        'path_save_csv': './content/preds/',
+        'path_save_models': './content/models/'
     },
     'training': {
         'device': 'cuda',
         'n_splits': 5
     },
+    'lb_scores': {
+        'logreg': 0.76,
+        'logreg_l1': 0.76,
+        'logreg_l2': 0.78,
+        'logreg_en': 0.76,
+        'knn': 0.74,
+        'dt': 0.76,
+        'rf': 0.77,
+        'catboost': 0.78,
+        'lightgbm': 0.76,
+        'xgboost': 0.75,
+        'nn': '—',
+        'bagging': '—',
+        'stacking': '—',
+        'stacking_l2': '—'
+    },
     'logreg': {
-        'max_iter': 1000,
+        'train_mode': True,
+        'params': {
+            'max_iter': 1000
+        }
     },
     'logreg_l1': {
-        'max_iter': 1000,
-        'penalty': 'l1',
-        'solver': 'liblinear',
-        'C': 1
+        'train_mode': True,
+        'params': {
+            'max_iter': 1000,
+            'penalty': 'l1',
+            'solver': 'liblinear',
+            'C': 1
+        }
     },
     'logreg_l2': {
-        'max_iter': 1000,
-        'penalty': 'l2',
-        'solver': 'lbfgs',
-        'C': 0.01
+        'train_mode': True,
+        'params': {
+            'max_iter': 1000,
+            'penalty': 'l2',
+            'solver': 'lbfgs',
+            'C': 0.01
+        }
     },
     'logreg_elnet': {
-        'max_iter': 1000,
-        'penalty': 'elasticnet',
-        'l1_ratio': 0.5,
-        'solver': 'saga',
-        'C': 1
+        'train_mode': True,
+        'params': {
+            'max_iter': 1000,
+            'penalty': 'elasticnet',
+            'l1_ratio': 0.5,
+            'solver': 'saga',
+            'C': 1
+        }
     },
     'knn': {
-        'n_neighbors': 6,
-        'weights': 'uniform',
-        'metric': 'chebyshev'
+        'train_mode': True,
+        'params': {
+            'n_neighbors': 6,
+            'weights': 'uniform',
+            'metric': 'chebyshev'
+        }
     },
     'decision_tree': {
-        'max_depth': 4,
-        'criterion': 'gini',
-        'splitter': 'best'
+        'train_mode': True,
+        'params': {
+            'max_depth': 4,
+            'criterion': 'gini',
+            'splitter': 'best'
+        }
     },
     'random_forest': {
-        'n_estimators': 50,
-        'min_samples_leaf': 2
+        'train_mode': True,
+        'params': {
+            'n_estimators': 50,
+            'min_samples_leaf': 2
+        }
     },
     'catboost': {
-        'iterations': 100,
-        'learning_rate': 0.075,
-        'depth': 5,
-        'loss_function': 'Logloss'
+        'train_mode': True,
+        'params': {
+            'iterations': 100,
+            'learning_rate': 0.075,
+            'depth': 5,
+            'loss_function': 'Logloss'
+        }
     },
     'lightgbm': {
-        'n_estimators': 100,
-        'learning_rate': 0.1,
-        'num_leaves': 31
+        'train_mode': True,
+        'params': {
+            'n_estimators': 100,
+            'learning_rate': 0.1,
+            'num_leaves': 31
+        }
     },
     'xgboost': {
-        'num_boost_round': 1000,
-        'learning_rate': 0.1,
-        'max_depth': 5,
-        'subsample': 0.75
+        'train_mode': True,
+        'params': {
+            'num_boost_round': 1000,
+            'learning_rate': 0.1,
+            'max_depth': 5,
+            'subsample': 0.75
+        }
     },
     'neural_network': {
+        'train_mode': True,
         'num_epochs': 20,
         'loss_fn': {
             'name': 'BCELoss',
@@ -89,6 +138,7 @@ config = {
         }
     },
     'bagging': {
+        'train_mode': True,
         'base_model': {
             'module': 'tree',
             'name': 'DecisionTreeClassifier',
@@ -101,6 +151,7 @@ config = {
         }
     },
     'stacking': {
+        'train_mode': True,
         'base_models': [
             {
                 'module': 'neighbors',
@@ -133,6 +184,7 @@ config = {
         }
     },
     'stacking_l2': {
+        'train_mode': True,
         'base_models': [
             {
                 'module': 'neighbors',
