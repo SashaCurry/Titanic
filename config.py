@@ -27,10 +27,10 @@ config = {
         'catboost': 0.78,
         'lightgbm': 0.76,
         'xgboost': 0.75,
-        'nn': '—',
-        'bagging': '—',
-        'stacking': '—',
-        'stacking_l2': '—'
+        'nn': 0.74,
+        'bagging': 0.76,
+        'stacking': 0.77,
+        'stacking_l2': 0.77
     },
     'logreg': {
         'train_mode': True,

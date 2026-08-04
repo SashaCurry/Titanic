@@ -201,7 +201,7 @@ def run(config):
                   f'Проверьте наличие файла "nn_model.joblib" в {config.paths.path_save_models}')
 
     model_data.append(['NeuralNetwork', nn_acc, '—', config.lb_scores.nn])
-    test_nn(X, nn_model)
+    test_nn(X=test_data, model=nn_model)
     
     # ↓↓↓ Ансамбль Bagging ↓↓↓
 
