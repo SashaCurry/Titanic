@@ -1,4 +1,5 @@
 from omegaconf import OmegaConf
+import numpy as np
 
 config = {
     'general': {
@@ -13,7 +14,7 @@ config = {
         'path_save_models': './content/models/'
     },
     'training': {
-        'device': 'cuda',
+        'device': 'cpu',
         'n_splits': 5
     },
     'lb_scores': {
@@ -35,14 +36,15 @@ config = {
     'logreg': {
         'train_mode': True,
         'params': {
-            'max_iter': 1000
+            'max_iter': 1000,
+            'C': np.inf
         }
     },
     'logreg_l1': {
         'train_mode': True,
         'params': {
             'max_iter': 1000,
-            'penalty': 'l1',
+            'l1_ratio': 1.0,
             'solver': 'liblinear',
             'C': 1
         }
@@ -51,7 +53,7 @@ config = {
         'train_mode': True,
         'params': {
             'max_iter': 1000,
-            'penalty': 'l2',
+            'l1_ratio': 0.0,
             'solver': 'lbfgs',
             'C': 0.01
         }
@@ -60,7 +62,6 @@ config = {
         'train_mode': True,
         'params': {
             'max_iter': 1000,
-            'penalty': 'elasticnet',
             'l1_ratio': 0.5,
             'solver': 'saga',
             'C': 1
@@ -213,7 +214,7 @@ config = {
             'name': 'LogisticRegression',
             'params': {
                 'max_iter': 1000,
-                'penalty': 'l2'
+                'l1_ratio': 0.0
             }
         }
     }
